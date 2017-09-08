@@ -22,7 +22,7 @@ public abstract class ParameterCommand implements Command {
 	public void execute(String parameters) {
 		String[] splitParameters = parameters.split("\"");
 
-		boolean inside = parameters.startsWith("\"");
+		boolean inside = false;
 		List<String> parsedParameters = new ArrayList<>();
 
 		for (String splitParameter : splitParameters) {
