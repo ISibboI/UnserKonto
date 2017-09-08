@@ -5,12 +5,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
+import unserkonto.cli.commands.ChangeAccountNameCommand;
 import unserkonto.cli.commands.CreateEntityCommand;
 import unserkonto.cli.commands.ExitCommand;
+import unserkonto.cli.commands.HelpCommand;
+import unserkonto.cli.commands.ListEntitiesCommand;
+import unserkonto.cli.commands.ListTransfersCommand;
 import unserkonto.cli.commands.SaveCommand;
 import unserkonto.model.Account;
 import unserkonto.model.EntityManager;
@@ -21,7 +28,8 @@ public class CLI implements Runnable {
 	}
 
 	private boolean running = true;
-	private Map<String, Command> commands = new HashMap<>();
+	private Map<String, Command> commandsByName = new HashMap<>();
+	private Set<Command> commands = new HashSet<>();
 
 	private final Account account;
 
@@ -35,19 +43,28 @@ public class CLI implements Runnable {
 				ObjectInputStream in = new ObjectInputStream(new FileInputStream(accountFile));
 				EntityManager.getInstance().readEntities(in);
 				account = (Account) in.readObject();
+				System.out.println("Loaded account '" + account.getName() + "'. Type ? for help");
 			} catch (IOException | ClassNotFoundException e) {
 				System.out.println("Error reading account data");
 				e.printStackTrace();
 			}
 		} else {
 			account = new Account();
+			System.out.println("Created new account. Type ? for help");
 		}
 		
 		this.account = account;
 
 		addCommand(new ExitCommand(this));
 		addCommand(new SaveCommand(account));
+		addCommand(new HelpCommand(this));
+		
+		addCommand(new ChangeAccountNameCommand(account));
+		
 		addCommand(new CreateEntityCommand(account));
+		addCommand(new ListEntitiesCommand());
+		
+		addCommand(new ListTransfersCommand(account));
 	}
 
 	public void run() {
@@ -70,7 +87,7 @@ public class CLI implements Runnable {
 				continue;
 			}
 
-			Command command = commands.get(commandName);
+			Command command = commandsByName.get(commandName);
 
 			if (command == null) {
 				System.out.println("No such command: '" + commandName + "'");
@@ -89,17 +106,19 @@ public class CLI implements Runnable {
 	}
 	
 	public Collection<Command> getCommands() {
-		return commands.values();
+		return Collections.unmodifiableSet(commands);
 	}
 
 	public void addCommand(Command command) {
 		for (String name : command.getNames()) {
-			if (commands.containsKey(name)) {
+			if (commandsByName.containsKey(name)) {
 				throw new RuntimeException("Duplicate command name: " + name + " in commands " + command + " and "
-						+ commands.get(name));
+						+ commandsByName.get(name));
 			}
 
-			commands.put(name, command);
+			commandsByName.put(name, command);
 		}
+		
+		commands.add(command);
 	}
 }
