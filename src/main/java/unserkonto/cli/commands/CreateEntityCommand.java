@@ -11,7 +11,7 @@ public class CreateEntityCommand extends ParameterCommand {
 
 	@Override
 	public String[] getNames() {
-		return new String[] {"createEntity"};
+		return new String[] {"createEntity", "addEntity"};
 	}
 
 	@Override
