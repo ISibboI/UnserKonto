@@ -1,9 +1,14 @@
 package unserkonto.cli.commands;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Date;
+
 import unserkonto.model.Account;
 import unserkonto.model.Entity;
 import unserkonto.model.EntityManager;
 import unserkonto.model.Money;
+import unserkonto.model.MoneyTransfer;
 
 public class CreateTransferCommand extends ParameterCommand {
 	public CreateTransferCommand(Account account) {
@@ -17,8 +22,8 @@ public class CreateTransferCommand extends ParameterCommand {
 
 	@Override
 	protected void execute(String[] parameters) {
-		if (parameters.length != 3) {
-			System.out.println("Need 3 parameters. Money, Partner and Date");
+		if (parameters.length < 3 || parameters.length > 4) {
+			System.out.println("Need 3 or 4 parameters. Money Partner Date [Due Date]");
 			return;
 		}
 
@@ -27,14 +32,20 @@ public class CreateTransferCommand extends ParameterCommand {
 		if (money == null) {
 			return;
 		}
+		
+		if (money.isZero()) {
+			System.out.println("Cannot create a transfer of zero euros");
+			return;
+		}
 
 		String partnerName = parameters[1];
-		int partnerId = -1;
+		int partnerId;
 		Entity partner; 
 
 		try {
 			partnerId = Integer.parseInt(partnerName);
-		} finally {
+		} catch (NumberFormatException e) {
+			partnerId = -1;
 		}
 		
 		if (partnerId != -1) {
@@ -53,6 +64,34 @@ public class CreateTransferCommand extends ParameterCommand {
 			partner = EntityManager.getInstance().getEntity(partnerName);
 		}
 		
-		// TODO Date
+		String dateString = parameters[2];
+		DateFormat df = DateFormat.getDateInstance();
+		Date date;
+		
+		try {
+			date = df.parse(dateString);
+		} catch (ParseException e) {
+			System.out.println("Malformed date string '" + dateString + "'");
+			return;
+		}
+		
+		MoneyTransfer transfer = new MoneyTransfer(money, partner, date);
+		
+		if (parameters.length >= 4) {
+			String dueDateString = parameters[3];
+			Date dueDate;
+			
+			try {
+				dueDate = df.parse(dueDateString);
+			} catch (ParseException e) {
+				System.out.println("Malformed date string '" + dueDateString + "'");
+				return;
+			}
+			
+			transfer.setDueDate(dueDate);
+		}
+		
+		getAccount().addTransfer(transfer);
+		System.out.println("Added " + transfer);
 	}
 }

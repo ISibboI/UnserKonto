@@ -4,14 +4,17 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.Objects;
 
 public class MoneyTransfer implements Serializable {
 	private static final long serialVersionUID = -6570559992255516858L;
+	private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
 	private final Money money;
 	private final Entity partner;
 	private final Date date;
+	private Date dueDate;
 
 	@SuppressWarnings("unused")
 	private MoneyTransfer() {
@@ -25,9 +28,14 @@ public class MoneyTransfer implements Serializable {
 		Objects.requireNonNull(partner, "partner");
 		Objects.requireNonNull(date, "date");
 		
+		if (money.isZero()) {
+			throw new IllegalArgumentException("Money is zero");
+		}
+		
 		this.money = money;
 		this.partner = partner;
 		this.date = date;
+		setDueDate(date);
 	}
 
 	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
@@ -40,6 +48,7 @@ public class MoneyTransfer implements Serializable {
 		Object m = in.readObject();
 		int id = in.readInt();
 		Object d = in.readObject();
+		Object dd = in.readObject();
 		
 		try {
 			Field money = getClass().getDeclaredField("money");
@@ -58,6 +67,12 @@ public class MoneyTransfer implements Serializable {
 			date.setAccessible(false);
 		} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
 			throw new IOException("Cannot create money transfer object");
+		}
+		
+		if (dd != null) {
+			dueDate = (Date) dd;
+		} else {
+			dueDate = date;
 		}
 	}
 
@@ -79,7 +94,9 @@ public class MoneyTransfer implements Serializable {
 	}
 	
 	public String toString() {
-		return "MoneyTransfer of " + money + " on " + date + " with " + partner;
+		String tofrom = money.isPositive() ? " from " : " to ";
+		
+		return "MoneyTransfer of " + money + " on " + DATE_FORMAT.format(date) + tofrom + partner + " due at " + DATE_FORMAT.format(dueDate);
 	}
 	
 	public boolean equals(Object o) {
@@ -93,5 +110,14 @@ public class MoneyTransfer implements Serializable {
 	
 	public int hashCode() {
 		return money.hashCode() ^ partner.hashCode() ^ date.hashCode();
+	}
+
+	public Date getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(Date dueDate) {
+		Objects.requireNonNull(dueDate);
+		this.dueDate = dueDate;
 	}
 }

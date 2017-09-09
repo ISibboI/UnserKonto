@@ -14,6 +14,7 @@ import java.util.Set;
 
 import unserkonto.cli.commands.ChangeAccountNameCommand;
 import unserkonto.cli.commands.CreateEntityCommand;
+import unserkonto.cli.commands.CreateTransferCommand;
 import unserkonto.cli.commands.ExitCommand;
 import unserkonto.cli.commands.HelpCommand;
 import unserkonto.cli.commands.ListEntitiesCommand;
@@ -64,6 +65,7 @@ public class CLI implements Runnable {
 		addCommand(new CreateEntityCommand(account));
 		addCommand(new ListEntitiesCommand());
 		
+		addCommand(new CreateTransferCommand(account));
 		addCommand(new ListTransfersCommand(account));
 	}
 
