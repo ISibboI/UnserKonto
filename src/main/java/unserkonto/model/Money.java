@@ -43,7 +43,7 @@ public class Money implements Serializable {
 		if (decimalSeparatorIndex == -1) {
 			decimalSeparatorIndex = moneyString.length();
 		}
-		
+
 		// Before the decimal separator
 
 		String precommaString = moneyString.substring(0, decimalSeparatorIndex);
@@ -52,66 +52,72 @@ public class Money implements Serializable {
 		precommaString = precommaString.replaceAll("\\s+", "");
 
 		int amount;
-		
+
 		try {
 			amount = Integer.parseInt(precommaString);
 		} catch (NumberFormatException e) {
-			System.out.println(e.getMessage());
+			System.out.println("Wrong currency format for '" + moneyString
+					+ "'. Problem is probably before the decimal separator");
 			return null;
 		}
-		
+
 		if (euro) {
 			if (amount >= Integer.MAX_VALUE / 100) {
-				System.out.println("Number too big. Can only handle money up to about " + (Integer.MAX_VALUE / 100) + "€");
+				System.out.println(
+						"Number too big. Can only handle money up to about " + (Integer.MAX_VALUE / 100) + "€");
 				return null;
 			}
-			
-			amount += 100;
+
+			amount *= 100;
 		}
-		
+
 		// Behind the decimal separator
-		
+
 		String postcommaString = moneyString.substring(decimalSeparatorIndex);
-		
+
 		if (!euro && postcommaString.length() > 0) {
 			System.out.println("Cannot handle broken cents");
 			return null;
 		}
-		
+
 		if (postcommaString.length() > 0) {
 			postcommaString = postcommaString.substring(1);
 		}
-		
+
 		postcommaString = postcommaString.replaceAll("\\s+", "");
-		
-		int postcommaAmount;
-		
-		try {
-			postcommaAmount = Integer.parseInt(postcommaString);
-		} catch (NumberFormatException e) {
-			System.out.println(e.getMessage());
-			return null;
+
+		if (postcommaString.length() > 0) {
+			int postcommaAmount;
+
+			try {
+				postcommaAmount = Integer.parseInt(postcommaString);
+			} catch (NumberFormatException e) {
+				System.out.println("Wrong currency format for '" + moneyString
+						+ "'. Problem is probably behind the decimal separator");
+				return null;
+			}
+
+			if (postcommaAmount < 0) {
+				System.out.println("No minus sign allowed behind decimal separator");
+				return null;
+			}
+
+			if (postcommaAmount < 10 && !postcommaString.startsWith("0")) {
+				postcommaAmount *= 10;
+			}
+
+			if (postcommaAmount >= 100) {
+				System.out.println("Can only handle up to two digits behind comma");
+				return null;
+			}
+
+			if (amount < 0 || precommaString.indexOf(MONEY_FORMAT.getDecimalFormatSymbols().getMinusSign()) != -1) {
+				postcommaAmount *= -1;
+			}
+
+			amount += postcommaAmount;
 		}
 		
-		if (postcommaAmount < 0) {
-			System.out.println("No minus sign allowed behind decimal separator");
-			return null;
-		}
-		
-		if (postcommaAmount < 10 && !postcommaString.startsWith("0")) {
-			postcommaAmount *= 10;
-		}
-		
-		if (postcommaAmount >= 100) {
-			System.out.println("Can only handle up to two digits behind comma");
-			return null;
-		}
-		
-		if (amount < 0 || precommaString.indexOf(MONEY_FORMAT.getDecimalFormatSymbols().getMinusSign()) != -1) {
-			postcommaAmount *= -1;
-		}
-		
-		amount += postcommaAmount;
 		return new Money(amount);
 	}
 
@@ -126,7 +132,7 @@ public class Money implements Serializable {
 	}
 
 	public String toString() {
-		return MONEY_FORMAT.format(amount);
+		return MONEY_FORMAT.format(amount / 100.0);
 	}
 
 	public boolean equals(Object o) {
@@ -186,5 +192,17 @@ public class Money implements Serializable {
 		}
 
 		return result;
+	}
+
+	public boolean isPositive() {
+		return amount > 0;
+	}
+	
+	public boolean isZero() {
+		return amount == 0;
+	}
+	
+	public boolean isNegative() {
+		return amount < 0;
 	}
 }
