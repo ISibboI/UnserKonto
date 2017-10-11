@@ -12,16 +12,15 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import unserkonto.cli.commands.ChangeAccountNameCommand;
-import unserkonto.cli.commands.CreateEntityCommand;
+import unserkonto.cli.commands.ChangeFlatNameCommand;
+import unserkonto.cli.commands.CreateInhabitantCommand;
 import unserkonto.cli.commands.CreateTransferCommand;
 import unserkonto.cli.commands.ExitCommand;
 import unserkonto.cli.commands.HelpCommand;
-import unserkonto.cli.commands.ListEntitiesCommand;
+import unserkonto.cli.commands.ListInhabitantsCommand;
 import unserkonto.cli.commands.ListTransfersCommand;
 import unserkonto.cli.commands.SaveCommand;
-import unserkonto.model.Account;
-import unserkonto.model.EntityManager;
+import unserkonto.model.Flat;
 
 public class CLI implements Runnable {
 	public static void main(String[] args) {
@@ -32,69 +31,64 @@ public class CLI implements Runnable {
 	private Map<String, Command> commandsByName = new HashMap<>();
 	private Set<Command> commands = new HashSet<>();
 
-	private final Account account;
+	private Flat flat;
 
 	public CLI() {
 		File accountFile = new File("account.jso");
 
-		Account account = null;
-		
 		if (accountFile.exists()) {
-			try {
-				ObjectInputStream in = new ObjectInputStream(new FileInputStream(accountFile));
-				EntityManager.getInstance().readEntities(in);
-				account = (Account) in.readObject();
-				System.out.println("Loaded account '" + account.getName() + "'. Type ? for help");
+			try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(accountFile))) {
+				flat = (Flat) in.readObject();
+				System.out.println("Loaded flat '" + flat.getName() + "'. Type ? for help");
 			} catch (IOException | ClassNotFoundException e) {
 				System.out.println("Error reading account data");
 				e.printStackTrace();
 			}
 		} else {
-			account = new Account();
+			flat = new Flat("");
 			System.out.println("Created new account. Type ? for help");
 		}
-		
-		this.account = account;
 
-		addCommand(new ExitCommand(this));
-		addCommand(new SaveCommand(account));
-		addCommand(new HelpCommand(this));
-		
-		addCommand(new ChangeAccountNameCommand(account));
-		
-		addCommand(new CreateEntityCommand(account));
-		addCommand(new ListEntitiesCommand());
-		
-		addCommand(new CreateTransferCommand(account));
-		addCommand(new ListTransfersCommand(account));
+		addCommand(new ExitCommand(this, "e", "q", "exit", "quit", "end"));
+		addCommand(new SaveCommand(this, "save"));
+		addCommand(new HelpCommand(this, "help", "h", "?"));
+
+		addCommand(new ChangeFlatNameCommand(this, "changeFlatName"));
+
+		addCommand(new CreateInhabitantCommand(this, "createInhabitant", "addInhabitant"));
+		addCommand(new ListInhabitantsCommand(this, "listInhabitants"));
+
+		addCommand(new CreateTransferCommand(this, "createTransfer", "addTransfer"));
+		addCommand(new ListTransfersCommand(this, "listTransfers", "listMoneyTransfers"));
 	}
 
+	@Override
 	public void run() {
-		Scanner scanner = new Scanner(System.in);
+		try (Scanner scanner = new Scanner(System.in)) {
+			while (running) {
+				System.out.print("> ");
+				String line = scanner.nextLine().trim();
 
-		while (running) {
-			System.out.print("> ");
-			String line = scanner.nextLine().trim();
+				int commandEnd = line.indexOf(' ');
+				String parameters = "";
+				String commandName = line;
 
-			int commandEnd = line.indexOf(' ');
-			String parameters = "";
-			String commandName = line;
+				if (commandEnd != -1) {
+					commandName = line.substring(0, commandEnd);
+					parameters = line.substring(commandEnd + 1).trim();
+				}
 
-			if (commandEnd != -1) {
-				commandName = line.substring(0, commandEnd);
-				parameters = line.substring(commandEnd + 1).trim();
-			}
+				if (commandName.isEmpty()) {
+					continue;
+				}
 
-			if (commandName.isEmpty()) {
-				continue;
-			}
+				Command command = commandsByName.get(commandName);
 
-			Command command = commandsByName.get(commandName);
-
-			if (command == null) {
-				System.out.println("No such command: '" + commandName + "'");
-			} else {
-				command.execute(parameters);
+				if (command == null) {
+					System.out.println("No such command: '" + commandName + "'");
+				} else {
+					command.execute(parameters);
+				}
 			}
 		}
 	}
@@ -103,10 +97,10 @@ public class CLI implements Runnable {
 		running = false;
 	}
 
-	public Account getAccount() {
-		return account;
+	public Flat getFlat() {
+		return flat;
 	}
-	
+
 	public Collection<Command> getCommands() {
 		return Collections.unmodifiableSet(commands);
 	}
@@ -120,7 +114,7 @@ public class CLI implements Runnable {
 
 			commandsByName.put(name, command);
 		}
-		
+
 		commands.add(command);
 	}
 }

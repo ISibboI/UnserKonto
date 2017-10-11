@@ -1,6 +1,6 @@
 package unserkonto;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,39 +15,45 @@ import java.util.Random;
 import org.junit.Test;
 
 import unserkonto.model.Account;
-import unserkonto.model.Entity;
-import unserkonto.model.EntityManager;
+import unserkonto.model.Flat;
+import unserkonto.model.Inhabitant;
 import unserkonto.model.Money;
 import unserkonto.model.MoneyTransfer;
 
 public class SerializationTest {
 	@Test
 	public void test() throws IOException, ClassNotFoundException {
-		Entity[] entities = new Entity[] { EntityManager.getInstance().createEntity("A"),
-				EntityManager.getInstance().createEntity("B"), EntityManager.getInstance().createEntity("C") };
+		Flat flat = new Flat("");
+		
+		Inhabitant[] inhabitants = new Inhabitant[] { flat.getInhabitantManager().createEntity("A"),
+				flat.getInhabitantManager().createEntity("B"), flat.getInhabitantManager().createEntity("C") };
 
-		Account originalAccount = new Account();
+		Account originalAccount = flat.getAccount();
 		Random r = new Random(25632L);
 
 		for (int i = 0; i < 1000; i++) {
-			originalAccount.addTransfer(new MoneyTransfer(new Money(r.nextInt(1001) - 500),
-					entities[r.nextInt(entities.length)], new Date(r.nextInt(400) * 400_000_000L)));
+			int money = 0;
+			
+			do {
+				money = r.nextInt(1001) - 500;
+			} while (money == 0);
+			
+			originalAccount.addTransfer(new MoneyTransfer(new Money(money),
+					inhabitants[r.nextInt(inhabitants.length)], new Date(r.nextInt(400) * 400_000_000L)));
 		}
 		
-		List<Entity> originalEntities = new ArrayList<>(EntityManager.getInstance().getEntities());
+		List<Inhabitant> originalInhabitants = new ArrayList<>(flat.getInhabitantManager().getInhabitants());
 		
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		ObjectOutputStream out = new ObjectOutputStream(bout);
-		EntityManager.getInstance().writeEntities(out);
-		out.writeObject(originalAccount);
-		EntityManager.getInstance().clear();
+		out.writeObject(flat);
 		
 		ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bout.toByteArray()));
-		EntityManager.getInstance().readEntities(in);
-		Account account = (Account) in.readObject();
+		flat = (Flat) in.readObject();
+		Account account = flat.getAccount();
 		
 		assertEquals(originalAccount.getTransfers(), account.getTransfers());
 		assertEquals(originalAccount.getCurrentBalance(), account.getCurrentBalance());
-		assertEquals(originalEntities, EntityManager.getInstance().getEntities());
+		assertEquals(originalInhabitants, flat.getInhabitantManager().getInhabitants());
 	}
 }

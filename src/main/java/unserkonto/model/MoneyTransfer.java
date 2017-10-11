@@ -3,7 +3,6 @@ package unserkonto.model;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -11,19 +10,19 @@ import java.util.Objects;
 public class MoneyTransfer implements Serializable {
 	private static final long serialVersionUID = -6570559992255516858L;
 	private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
-	private final Money money;
-	private final Entity partner;
-	private final Date date;
+	private Money money;
+	private int partnerId;
+	private Date date;
 	private Date dueDate;
 
 	@SuppressWarnings("unused")
 	private MoneyTransfer() {
 		money = null;
-		partner = null;
+		partnerId = -1;
 		date = null;
 	}
 
-	public MoneyTransfer(Money money, Entity partner, Date date) {
+	public MoneyTransfer(Money money, Inhabitant partner, Date date) {
 		Objects.requireNonNull(money, "money");
 		Objects.requireNonNull(partner, "partner");
 		Objects.requireNonNull(date, "date");
@@ -33,47 +32,23 @@ public class MoneyTransfer implements Serializable {
 		}
 		
 		this.money = money;
-		this.partner = partner;
+		this.partnerId = partner.getId();
 		this.date = date;
 		setDueDate(date);
 	}
 
 	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
 		out.writeObject(money);
-		out.writeInt(partner.getId());
+		out.writeInt(partnerId);
 		out.writeObject(date);
+		out.writeObject(dueDate);
 	}
 
 	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-		Object m = in.readObject();
-		int id = in.readInt();
-		Object d = in.readObject();
-		Object dd = in.readObject();
-		
-		try {
-			Field money = getClass().getDeclaredField("money");
-			money.setAccessible(true);
-			money.set(this, m);
-			money.setAccessible(false);
-			
-			Field partner = getClass().getDeclaredField("partner");
-			partner.setAccessible(true);
-			partner.set(this, EntityManager.getInstance().getEntity(id));
-			partner.setAccessible(false);
-			
-			Field date = getClass().getDeclaredField("date");
-			date.setAccessible(true);
-			date.set(this, d);
-			date.setAccessible(false);
-		} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
-			throw new IOException("Cannot create money transfer object");
-		}
-		
-		if (dd != null) {
-			dueDate = (Date) dd;
-		} else {
-			dueDate = date;
-		}
+		money = (Money) in.readObject();
+		partnerId = in.readInt();
+		date = (Date) in.readObject();
+		dueDate = (Date) in.readObject();
 	}
 
 	@SuppressWarnings("unused")
@@ -85,31 +60,38 @@ public class MoneyTransfer implements Serializable {
 		return money;
 	}
 
-	public Entity getPartner() {
-		return partner;
+	public int getPartnerId() {
+		return partnerId;
+	}
+	
+	public Inhabitant getPartner(InhabitantManager entityManager) {
+		return entityManager.getEntity(partnerId);
 	}
 
 	public Date getDate() {
 		return date;
 	}
 	
+	@Override
 	public String toString() {
 		String tofrom = money.isPositive() ? " from " : " to ";
 		
-		return "MoneyTransfer of " + money + " on " + DATE_FORMAT.format(date) + tofrom + partner + " due at " + DATE_FORMAT.format(dueDate);
+		return "MoneyTransfer of " + money + " on " + DATE_FORMAT.format(date) + tofrom + partnerId + " due at " + DATE_FORMAT.format(dueDate);
 	}
 	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof MoneyTransfer) {
 			MoneyTransfer t = (MoneyTransfer) o;
-			return t.money.equals(money) && t.partner.equals(partner) && t.date.equals(date);
+			return t.money.equals(money) && t.partnerId == partnerId && t.date.equals(date);
 		}
 		
 		return false;
 	}
 	
+	@Override
 	public int hashCode() {
-		return money.hashCode() ^ partner.hashCode() ^ date.hashCode();
+		return money.hashCode() ^ partnerId ^ date.hashCode();
 	}
 
 	public Date getDueDate() {

@@ -1,17 +1,11 @@
 package unserkonto.cli.commands;
 
-import unserkonto.model.Account;
-import unserkonto.model.Entity;
-import unserkonto.model.EntityManager;
+import unserkonto.cli.CLI;
+import unserkonto.model.Inhabitant;
 
-public class CreateEntityCommand extends ParameterCommand {
-	public CreateEntityCommand(Account account) {
-		super(account);
-	}
-
-	@Override
-	public String[] getNames() {
-		return new String[] {"createEntity", "addEntity"};
+public class CreateInhabitantCommand extends ParameterCommand {
+	public CreateInhabitantCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override
@@ -28,12 +22,12 @@ public class CreateEntityCommand extends ParameterCommand {
 		
 		String name = parameters[0];
 		
-		if (EntityManager.getInstance().hasName(name)) {
+		if (getFlat().getInhabitantManager().hasName(name)) {
 			System.out.println("An entity with that name already exists");
 			return;
 		}
 		
-		Entity entity = EntityManager.getInstance().createEntity(name);
+		Inhabitant entity = getFlat().getInhabitantManager().createEntity(name);
 		System.out.println("Created entity '" + entity.getName() + "' with id " + entity.getId());
 	}
 }

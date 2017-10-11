@@ -7,25 +7,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public final class EntityManager implements Serializable {
+public final class InhabitantManager implements Serializable {
 	private static final long serialVersionUID = 925164777557540846L;
-	private static final EntityManager entityManager = new EntityManager();
 	
-	private EntityManager() {}
+	private final List<Inhabitant> entities = new ArrayList<>();
+	private final Map<String, Inhabitant> entitiesByName = new HashMap<>();
 	
-	public static EntityManager getInstance() {
-		return entityManager;
-	}
-	
-	private final List<Entity> entities = new ArrayList<>();
-	private final Map<String, Entity> entitiesByName = new HashMap<>();
-	
-	public Entity getEntity(int id) {
+	public Inhabitant getEntity(int id) {
 		if (id < 0 || id >= entities.size()) {
 			throw new IndexOutOfBoundsException("No entity with id " + id);
 		}
@@ -37,7 +28,7 @@ public final class EntityManager implements Serializable {
 		return id >= 0 && id < entities.size();
 	}
 	
-	public Entity getEntity(String name) {
+	public Inhabitant getEntity(String name) {
 		if (!hasEntity(name)) {
 			throw new IllegalArgumentException("No entity with name '" + name + "'");
 		}
@@ -49,22 +40,21 @@ public final class EntityManager implements Serializable {
 		return entitiesByName.containsKey(name);
 	}
 	
-	public List<Entity> getEntities() {
+	public List<Inhabitant> getInhabitants() {
 		return Collections.unmodifiableList(entities);
 	}
 	
-	public Entity createEntity(String name) {
+	public Inhabitant createEntity(String name) {
 		if (entitiesByName.containsKey(name)) {
 			throw new IllegalArgumentException("An entity with name '" + name + "' already exists");
 		}
 		
-		Entity e = new Entity(name, entities.size());
+		Inhabitant e = new Inhabitant(name, entities.size());
 		entities.add(e);
 		entitiesByName.put(name, e);
 		return e;
 	}
 	
-	@Deprecated
 	public boolean hasName(String name) {
 		return hasEntity(name);
 	}
@@ -73,17 +63,17 @@ public final class EntityManager implements Serializable {
 		entities.clear();
 	}
 	
-	public void writeEntities(ObjectOutputStream out) throws IOException {
+	public void writeInhabitants(ObjectOutputStream out) throws IOException {
 		out.writeObject(entities);
 	}
 	
-	public void readEntities(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	public void readInhabitants(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		@SuppressWarnings("unchecked")
-		List<Entity> loadedEntities = (List<Entity>) in.readObject();
+		List<Inhabitant> loadedEntities = (List<Inhabitant>) in.readObject();
 		entities.clear();
 		entities.addAll(loadedEntities);
 		
-		for (Entity entity: loadedEntities) {
+		for (Inhabitant entity: loadedEntities) {
 			entitiesByName.put(entity.getName(), entity);
 		}
 	}

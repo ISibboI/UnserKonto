@@ -4,18 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import unserkonto.cli.CLI;
 import unserkonto.cli.Command;
-import unserkonto.model.Account;
 
-public abstract class ParameterCommand implements Command {
-	private final Account account;
-
-	public ParameterCommand(Account account) {
-		this.account = account;
-	}
-
-	public Account getAccount() {
-		return account;
+public abstract class ParameterCommand extends Command {
+	public ParameterCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override

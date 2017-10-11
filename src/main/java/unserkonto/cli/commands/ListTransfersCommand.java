@@ -1,26 +1,19 @@
 package unserkonto.cli.commands;
 
+import unserkonto.cli.CLI;
 import unserkonto.cli.Command;
-import unserkonto.model.Account;
 import unserkonto.model.MoneyTransfer;
 
-public class ListTransfersCommand implements Command {
-	private Account account;
-	
-	public ListTransfersCommand(Account account) {
-		this.account = account;
-	}
-	
-	@Override
-	public String[] getNames() {
-		return new String[] {"listTransfers", "listMoneyTransfers"};
+public class ListTransfersCommand extends Command {
+	public ListTransfersCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override
 	public void execute(String parameters) {
-		System.out.println("All money transfers for '" + account.getName() + "'");
+		System.out.println("All money transfers for '" + getAccount().getName() + "'");
 		
-		for (MoneyTransfer t: account.getTransfers()) {
+		for (MoneyTransfer t: getAccount().getTransfers()) {
 			System.out.println(t);
 		}
 	}

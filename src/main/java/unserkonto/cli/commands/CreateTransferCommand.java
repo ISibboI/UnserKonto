@@ -4,20 +4,14 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
-import unserkonto.model.Account;
-import unserkonto.model.Entity;
-import unserkonto.model.EntityManager;
+import unserkonto.cli.CLI;
+import unserkonto.model.Inhabitant;
 import unserkonto.model.Money;
 import unserkonto.model.MoneyTransfer;
 
 public class CreateTransferCommand extends ParameterCommand {
-	public CreateTransferCommand(Account account) {
-		super(account);
-	}
-
-	@Override
-	public String[] getNames() {
-		return new String[] { "createTransfer", "addTransfer" };
+	public CreateTransferCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override
@@ -40,7 +34,7 @@ public class CreateTransferCommand extends ParameterCommand {
 
 		String partnerName = parameters[1];
 		int partnerId;
-		Entity partner; 
+		Inhabitant partner; 
 
 		try {
 			partnerId = Integer.parseInt(partnerName);
@@ -49,19 +43,19 @@ public class CreateTransferCommand extends ParameterCommand {
 		}
 		
 		if (partnerId != -1) {
-			if (!EntityManager.getInstance().hasEntity(partnerId)) {
+			if (!getFlat().getInhabitantManager().hasEntity(partnerId)) {
 				System.out.println("Unknown entity id '" + partnerId + "'");
 				return;
 			}
 			
-			partner = EntityManager.getInstance().getEntity(partnerId);
+			partner = getFlat().getInhabitantManager().getEntity(partnerId);
 		} else {
-			if (!EntityManager.getInstance().hasEntity(partnerName)) {
+			if (!getFlat().getInhabitantManager().hasEntity(partnerName)) {
 				System.out.println("Unknown entity name '" + partnerName + "'");
 				return;
 			}
 			
-			partner = EntityManager.getInstance().getEntity(partnerName);
+			partner = getFlat().getInhabitantManager().getEntity(partnerName);
 		}
 		
 		String dateString = parameters[2];
@@ -91,7 +85,7 @@ public class CreateTransferCommand extends ParameterCommand {
 			transfer.setDueDate(dueDate);
 		}
 		
-		getAccount().addTransfer(transfer);
+		getFlat().getAccount().addTransfer(transfer);
 		System.out.println("Added " + transfer);
 	}
 }

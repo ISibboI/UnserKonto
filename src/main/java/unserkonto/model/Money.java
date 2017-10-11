@@ -2,7 +2,6 @@ package unserkonto.model;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -131,10 +130,12 @@ public class Money implements Serializable {
 		this.amount = amount;
 	}
 
+	@Override
 	public String toString() {
 		return MONEY_FORMAT.format(amount / 100.0);
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Money) {
 			Money m = (Money) o;
@@ -144,6 +145,7 @@ public class Money implements Serializable {
 		return false;
 	}
 
+	@Override
 	public int hashCode() {
 		return amount;
 	}

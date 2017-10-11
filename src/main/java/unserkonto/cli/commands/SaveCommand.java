@@ -4,23 +4,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
 
 import unserkonto.cli.CLI;
 import unserkonto.cli.Command;
-import unserkonto.model.Account;
-import unserkonto.model.EntityManager;
 
-public class SaveCommand implements Command {
-	private final Account account;
-	
-	public SaveCommand(Account account) {
-		this.account = account;
-	}
-
-	@Override
-	public String[] getNames() {
-		return new String[] {"save"};
+public class SaveCommand extends Command {
+	public SaveCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override
@@ -31,10 +21,8 @@ public class SaveCommand implements Command {
 			accountFile.delete();
 		}
 		
-		try {
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(accountFile));
-			EntityManager.getInstance().writeEntities(out);
-			out.writeObject(account);
+		try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(accountFile))) {
+			out.writeObject(getFlat());
 			System.out.println("Account data saved");
 		} catch (IOException e) {
 			System.out.println("Could not save account data");

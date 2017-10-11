@@ -1,15 +1,10 @@
 package unserkonto.cli.commands;
 
-import unserkonto.model.Account;
+import unserkonto.cli.CLI;
 
-public class ChangeAccountNameCommand extends ParameterCommand {
-	public ChangeAccountNameCommand(Account account) {
-		super(account);
-	}
-	
-	@Override
-	public String[] getNames() {
-		return new String[] {"changeAccountName"};
+public class ChangeFlatNameCommand extends ParameterCommand {
+	public ChangeFlatNameCommand(CLI cli, String... names) {
+		super(cli, names);
 	}
 
 	@Override
@@ -25,7 +20,7 @@ public class ChangeAccountNameCommand extends ParameterCommand {
 		}
 		
 		String name = parameters[0];
-		getAccount().setName(name);
+		getFlat().getAccount().setName(name);
 		System.out.println("Set account name to '" + name + "'");
 	}
 }
